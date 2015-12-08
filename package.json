@@ -1,0 +1,32 @@
+{
+  "name": "zanner-manager-middle",
+  "version": "1.0.1",
+  "description": "middle manager",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "test/index.js"
+  },
+  "keywords": [
+    "middle",
+    "manager"
+  ],
+  "author": "Sergey Kukharev",
+  "license": "ISC",
+  "dependencies": {
+    "url": "^0.11.0",
+    "util": "^0.10.3",
+    "zanner-typeof": "^1.0.1"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sergej-kucharev/zanner-manager-middle.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sergej-kucharev/zanner-manager-middle/issues"
+  },
+  "homepage": "https://github.com/sergej-kucharev/zanner-manager-middle#readme"
+}
