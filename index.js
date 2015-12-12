@@ -223,7 +223,7 @@ var middleManagerOrderCheck = function(_items){
 	for(var i=0; i<_items.length; i++){
 		var item = _items[i], id = item.id();
 		if(item.orderCheck(ordered)) ordered.push(id);
-		else throw pf('[middleManagerOrderCheck]: not all dependence set for (id:"%s")', check);
+		else throw pf('[middleManagerOrderCheck]: not all dependence set for (id:"%s")', id);
 	}
 	return true;
 };
