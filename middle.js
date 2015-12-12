@@ -134,24 +134,24 @@ var middleMatch = function(_match, _request){
 		case 'object':
 			var requestMethod = _request.method.toLowerCase();
 			if('method' in _match){
-				if(!middleMatchEqual(_match.method, requestMethod)) return false;
+				if(!middleMatchEqual(_match.method, requestMethod)) break;
 			}
 			else if('m' in _match){
-				if(!middleMatchEqual(_match.m, requestMethod)) return false;
+				if(!middleMatchEqual(_match.m, requestMethod)) break;
 			}
 			var requestHost = pu(_request).hostname;
 			if('host' in _match){
-				if(!middleMatchEqual(_match.host, requestHost)) return false;
+				if(!middleMatchEqual(_match.host, requestHost)) break;
 			}
 			else if('h' in _match){
-				if(!middleMatchEqual(_match.h, requestHost)) return false;
+				if(!middleMatchEqual(_match.h, requestHost)) break;
 			}
 			var requestPath = pu(_request).pathname;
 			if('path' in _match){
-				if(!middleMatchLLike(_match.path, requestPath)) return false;
+				if(!middleMatchLLike(_match.path, requestPath)) break;
 			}
 			else if('p' in _match){
-				if(!middleMatchLLike(_match.p, requestPath)) return false;
+				if(!middleMatchLLike(_match.p, requestPath)) break;
 			}
 			return true;
 		case 'regexp':
@@ -162,8 +162,9 @@ var middleMatch = function(_match, _request){
 			var requestPath = pu(_request).pathname;
 			// get://host1.host2.host3.host4/path1/path2/path3/path4
 			var RE = /^(?:([\w]+|[\*])[\:])?(?:[\/]{2}([\w\.\_\-]+|[\*]))?(?:[\/]{1}([^\/]+(?:[\/][^\/]+)*|[\*])?)?$/i;
-			if(_match==='') return false;
+			if(_match==='') break;
 			else if(_match==='*') return true;
+			else if(_match===requestPath) return true;
 			else if(requestPath.indexOf(_match, 0)==0) return true;
 			else if(RE.test(_match)){
 				var m = RE.exec(_match);
@@ -173,7 +174,7 @@ var middleMatch = function(_match, _request){
 				matched.path = !m[3] ? '/' : m[3]==='*' ? '*' : '/' + m[3];
 				return middleMatch(matched, _request);
 			}
-			return false;
+			break;
 	}
 	return false;
 };
