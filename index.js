@@ -174,7 +174,7 @@ var middleManagerIds = function(_items){
 };
 
 var middleManagerIndex = function(_items, _id){
-	return Object.keys(_items).filter(function(index){
+	return Object.keys(_items).find(function(index){
 		return _items[index].id()==_id;
 	});
 };
