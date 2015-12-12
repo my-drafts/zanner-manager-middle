@@ -251,7 +251,6 @@ var middleManagerSet = function(_items, _value){
 };
 
 var middleManagerUnset = function(_items, _id){
-	middleManagerIndex(_items, _id).map(function(index){
-		delete _items[index];
-	});
+	var index = middleManagerIndex(_items, _id);
+	if(index!=-1) delete _items[index];
 };
