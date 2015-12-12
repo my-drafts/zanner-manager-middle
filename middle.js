@@ -1,205 +1,187 @@
 
+var pu = require('url').parse;
 var pf = require('util').format;
 var uis = require('util').inspect;
-var of = require('zanner-typeof').typeOf;
-
+var of = require('zanner-typeof').of;
 var logger = require('zanner-logger')('middle');
-var meta = require('./usefull').meta;
 
-var middle = module.exports = function(_log, _manager, _id){
+var middle = module.exports = function(_log, _manager, _id, _execute, _match, _order, _alias){
 	var self = this;
-	var ID = self._id = String(_id).toLowerCase();
-	var MANAGER = self._manager = _manager;
-	var log = self.log = function(){
-		(_log ? _log : logger).log.apply(self, arguments);
+
+	var log = function(){
+		(_log ? _log : logger.log).apply(self, arguments);
 	};
 
+	// manager for middle
 	if(!of(_manager, 'object')){
-		log('error', 'In constructor MANAGER is undefined');
+		log('error', '[middle.constructor]: MANAGER is undefined');
 		throw pf('Error [middle.constructor]: MANAGER is undefined');
 	}
-
-	if(!of(_id, 'string')){
-		log('error', 'IN constructor ID is undefined');
-		throw pf('Error [middle.constructor]: ID is undefined');
-	}
-
-	// manager for middle
-	self.manager = function(){
-		return MANAGER;
+	this._manager = _manager;
+	this.manager = function(){
+		return _manager;
 	};
 
 	// id for middle
-	self.id = function(){
-		return ID;
-	};
-
-	// execute -> next( error, request, response );
-	// @overwrite
-	self.execute = function(request, response, aliasCall, next){
-		log('error', 'Execute not overloaded of "%s"', ID);
-		throw pf('Error [middle.execute]: not overloaded of "%s"', ID);
-	};
-
-	// execute match -> return (bool){ true | false };
-	// @overwrite
-	self.match = function(request, response, aliasCall){
-		log('error', 'Match not overloaded of "%s"', ID);
-		throw pf('Error [middle.match]: not overloaded of "%s"', ID);
-	};
-
-	// execute order -> return (int){ 1 ( this < id ) | 0 ( this > id ) };
-	// @overwrite
-	self.order = function(id){
-		log('error', 'Order not overloaded of "%s"', ID);
-		throw pf('Error [middle.order]: not overloaded of "%s"', ID);
-	};
-
-	// execute ordered -> return (bool){ true ( all requirements ok ) | false ( not all ) };
-	// @overwrite
-	self.ordered = function(id){
-		log('error', 'Ordered not overloaded of "%s"', ID);
-		throw pf('Error [middle.ordered]: not overloaded of "%s"', ID);
-	};
-};
-
-middle.prototype.one = function(_log, manager, id, execute, match, order, alias){
-	var log = function(){
-		(_log ? _log : logger).log.apply(self, arguments);
-	};
-	if(!of(execute, 'function')){
-		log('error', 'Unknown execute for id:"%s" in one', id);
-		throw pf('Error [middle.one]: execute for id:"%s" unknown', id);
+	if(!of(_id, 'string')){
+		log('error', '[middle.constructor]: ID is undefined');
+		throw pf('Error [middle.constructor]: ID is undefined');
 	}
-	if(!of(match, 'function')){
-		var _match = match;
-		match = function(request, response, aliasCall){
-			return middleOneMatch(id, _match, request);
+	else _id = String(_id).toLowerCase();
+	this._id = _id;
+	this.id = function(){
+		return _id;
+	};
+
+	// execute for middle
+	// execute -> next( error, z, request, response );
+	if(!of(_execute, 'function')){
+		log('error', '[middle.constructor]: EXECUTE is undefined for id:"%s"', self.id());
+		throw pf('Error [middle.constructor]: EXECUTE is undefined for id:"%s"', self.id());
+	}
+	this.execute = function(z, request, response, next){
+		log('debug', 'execute("%s")', self.id());
+		var result = _execute.apply(m, [z, request, response, next]);
+		log('info', 'execute("%s") -> %s', self.id(), uis(result, {depth: 0}));
+		return result;
+	};
+
+	// match for middle
+	// match -> return (bool){ true | false };
+	if(!of(_match, 'function')){
+		var __match = _match;
+		_match = function(z, request, response){
+			return middleOneMatch(__match, request);
 		};
 	}
-	order = of(order, 'array') ? order : of(order, 'string') ? [order] : [];
-	alias = !of(alias, 'object') ? {} : alias;
-	var m = new middle(_log, manager, id);
-	m.execute = function(request, response, aliasCall, next){
-		log('debug', 'execute("%s")', id);
-		var result = execute.apply(m, [request, response, aliasCall, next]);
-		log('info', 'execute("%s") -> %s', id, uis(result, {depth: 0}));
+	this.match = function(z, request, response){
+		log('debug', 'match("%s")', self.id());
+		var result = _match.apply(m, [z, request, response]);
+		log('info', 'match("%s") -> %s', self.id(), result);
 		return result;
 	};
-	m.match = function(request, response, aliasCall){
-		log('debug', 'match("%s")', id);
-		var result = match.apply(m, [request, response, aliasCall]);
-		log('info', 'match("%s") -> %s', id, result);
+
+	// order for middle
+	// order -> return (int){ 1 ( this < id ) | 0 ( this > id ) };
+	_order = of(_order, 'array') ? _order : of(_order, 'string') ? [_order] : [];
+	this.order = function(middleId){
+		log('debug', 'order("%s")', self.id());
+		var result = middleOrder(_order, middleId);
+		log('info', 'order("%s"), middle("%s") -> %j', self.id(), middleId, result);
 		return result;
 	};
-	m.order = function(middleId){
-		var result;
-		if(middleId==undefined) result = order;
-		else result = middleOneOrder.apply(m, [id, order, middleId]);
-		log('info', 'order("%s"), middle("%s") -> %j', id, middleId, result);
+
+	// orderCheck for middle
+	// orderCheck -> return (bool){ true ( all requirements ok ) | false ( not all ) };
+	this.orderCheck = function(ordered){
+		log('debug', 'ordered("%s")', self.id());
+		var result = middleOrderCheck(_order, ordered);
+		log('info', 'ordered("%s") -> %j', self.id(), result);
 		return result;
 	};
-	m.ordered = function(ordered){
-		var result = middleOneOrdered.apply(m, [id, order, ordered]);
-		log('info', 'ordered("%s") -> %j', id, result);
-		return result;
+
+	// alias for middle
+	_alias = !of(_alias, 'object') ? {} : _alias;
+	this.alias = function(name){
+		return of(name, 'undefined') ? Object.keys(_alias) : (name in _alias) ? _alias[name] : undefined;
 	};
-	m.alias = function(){
-		return alias;
-	};
-	return m;
 };
 
-var middleOneMatch = function(id, match, request){
-	switch(of(match)){
-		case 'array':
-			for(var index in match){
-				if(middleOneMatch(id, match[index], request)) return true;
-			}
-		case 'boolean':
-			return match==true;
+middle.prototype.inspect = function(depth){
+	return pf('middle("%s",%j)', this.id(), this.alias());
+};
+
+
+
+var middleMatchCompare = function(_match, _value, _compare){
+	if(!of(_compare, 'function')){
+		throw '[middleMatchCompare]: compare not function';
+	}
+	switch(of(_match)){
+		case 'array':  return _match.some(function(m){return middleOneMatchCompare(m, _value, _compare);});
+		case 'regexp': return _match.test(_value);
+		case 'string': return !!_compare(_match, _value);
+	}
+	return false;
+};
+
+var middleMatchEqual = function(_match, _value){
+	return middleMatchCompare(_match, _value, function(m, v){
+		return m==='*' || m===v;
+	});
+};
+
+var middleMatchLike = function(match, value){
+	return middleMatchCompare(_match, _value, function(m, v){
+		return m==='*' || v.indexOf(m, 0)!=-1;
+	});
+};
+
+var middleMatchLLike = function(match, value){
+	return middleMatchCompare(_match, _value, function(m, v){
+		return m==='*' || v.indexOf(m, 0)==0;
+	});
+};
+
+var middleOneMatch = function(_match, _request){
+	switch(of(_match)){
+		case 'array': return _match.some(function(m){ return middleOneMatch(m, _request); });
+		case 'boolean': return _match;
 		case 'object':
-			var rm = of(request.z, 'object') && of(request.z.URL, 'object') ? request.z.URL : meta(request);
-			if(('method' in match) && !middleOneMatchObjectEqual(match.method, rm.method)) return false;
-			if(('m' in match) && !middleOneMatchObjectEqual(match.m, rm.method)) return false;
-			if(('host' in match) && !middleOneMatchObjectEqual(match.host, rm.hostname)) return false;
-			if(('h' in match) && !middleOneMatchObjectEqual(match.h, rm.hostname)) return false;
-			if(('path' in match) && !middleOneMatchObjectLLike(match.path, rm.pathname)) return false;
-			if(('p' in match) && !middleOneMatchObjectLLike(match.p, rm.pathname)) return false;
+			var requestMethod = _request.method.toLowerCase();
+			if('method' in _match){
+				if(!middleMatchEqual(_match.method, requestMethod)) return false;
+			}
+			else if('m' in _match){
+				if(!middleMatchEqual(_match.m, requestMethod)) return false;
+			}
+			var requestHost = pu(_request).hostname;
+			if('host' in _match){
+				if(!middleMatchEqual(_match.host, requestHost)) return false;
+			}
+			else if('h' in _match){
+				if(!middleMatchEqual(_match.h, requestHost)) return false;
+			}
+			var requestPath = pu(_request).pathname;
+			if('path' in _match){
+				if(!middleMatchLLike(_match.path, requestPath)) return false;
+			}
+			else if('p' in _match){
+				if(!middleMatchLLike(_match.p, requestPath)) return false;
+			}
 			return true;
 		case 'regexp':
-			var rm = of(request.z, 'object') && of(request.z.URL, 'object') ? request.z.URL : meta(request);
-			var result = match.exec(rm.pathname);
+			var requestPath = pu(_request).pathname;
+			var result = _match.exec(requestPath);
 			return result && (result.index==0);
 		case 'string':
-			var rm = of(request.z, 'object') && of(request.z.URL, 'object') ? request.z.URL : meta(request);
+			var requestPath = pu(_request).pathname;
 			// get://host1.host2.host3.host4/path1/path2/path3/path4
-			var RE = /^(?:([\w]+|[\*])[\:])?(?:[\/]{2}([\w\.\_\-]+|[\*]))?(?:[\/]([^\/]+(?:[\/][^\/]+)*|[\*])?)?$/i;
-			if(match==''){
-				return false;
-			}
-			else if(rm.pathname.indexOf(match, 0)==0){
-				return true;
-			}
-			else if(match=='*'){
-				return true;
-			}
-			else if(RE.test(match)){
-				var m = RE.exec(match);
+			var RE = /^(?:([\w]+|[\*])[\:])?(?:[\/]{2}([\w\.\_\-]+|[\*]))?(?:[\/]{1}([^\/]+(?:[\/][^\/]+)*|[\*])?)$/i;
+			if(_match==='') return false;
+			else if(_match==='*') return true;
+			else if(requestPath.indexOf(_match, 0)==0) return true;
+			else if(RE.test(_match)){
+				var m = RE.exec(_match);
 				var matched = {};
-				if(m[1]) matched.method = m[1];
+				if(m[1]) matched.method = m[1].toLowerCase();
 				if(m[2]) matched.host = m[2];
-				if(m[3]) matched.path = m[3]=='*' ? '*' : '/' + m[3];
-				return middleOneMatch(id, matched, request);
+				matched.path = !m[3] ? '/' : m[3]==='*' ? '*' : '/' + m[3];
+				return middleOneMatch(matched, _request);
 			}
 			return false;
 	}
 	return false;
 };
 
-var middleOneMatchObjectEqual = function(match, value){
-	if(match=='*') return true;
-	switch(of(match)){
-		case 'array':
-			if(!match.find(function(m){return (m=='*')||(m==value);})) return false;
-		case 'regexp':
-			if(!match.test(value)) return false;
-		case 'string':
-			if(!(match==value)) return false;
+var middleOrder = function(_order, _middleId){
+	switch(of(_order)){
+		case 'array':  return _order.some(function(o){ return middleOneOrder(o, _middleId)==1; }) ? 1 : 0;
+		case 'string': return _order.toLowerCase()==_middleId.toLowerCase() ? 1 : 0;
 	}
-	return true;
+	throw 'Error [middleOrder]: order unknown';
 };
 
-var middleOneMatchObjectLLike = function(match, value){
-	if(match=='*') return true;
-	switch(of(match)){
-		case 'array':
-			if(!match.find(function(m){return (m=='*')||(value.indexOf(m, 0)==0);})) return false;
-		case 'regexp':
-			if(!match.test(value)) return false;
-		case 'string':
-			if(!(value.indexOf(match, 0)==0)) return false;
-	}
-	return true;
-};
-
-var middleOneOrder = function(id, order, middleId){
-	switch(of(order)){
-		case 'array':
-			for(var index in order){
-				if(middleOneOrder(id, order[index], middleId)==1) return 1;
-			}
-			return 0;
-		case 'string':
-			return (order.toLowerCase()==middleId) ? 1 : 0;
-		default:
-			throw pf('Error [middleOneOrder]: order for id:"%s" unknown', id);
-	}
-};
-
-var middleOneOrdered = function(id, order, ordered){
-	for(var index in order){
-		if(ordered.indexOf(order[index])==-1) return false;
-	}
-	return true;
+var middleOrderCheck = function(_order, _ordered){
+	return !_order.some(function(o){ return _ordered.indexOf(o)==-1; });
 };

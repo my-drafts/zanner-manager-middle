@@ -1,6 +1,6 @@
 {
   "name": "zanner-manager-middle",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "middle manager",
   "main": "index.js",
   "directories": {
@@ -18,7 +18,8 @@
   "dependencies": {
     "url": "^0.11.0",
     "util": "^0.10.3",
-    "zanner-typeof": "^1.0.1"
+    "zanner-logger": "^1.0.4",
+    "zanner-typeof": "^1.0.4"
   },
   "devDependencies": {},
   "repository": {
