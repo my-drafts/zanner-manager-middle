@@ -161,7 +161,7 @@ var middleMatch = function(_match, _request){
 		case 'string':
 			var requestPath = pu(_request).pathname;
 			// get://host1.host2.host3.host4/path1/path2/path3/path4
-			var RE = /^(?:([\w]+|[\*])[\:])?(?:[\/]{2}([\w\.\_\-]+|[\*]))?(?:[\/]{1}([^\/]+(?:[\/][^\/]+)*|[\*])?)?$/i;
+			var RE = /^(?:([\w]+|[\*])[\:])?(?:[\/]{2}([\w\d\:\.\_\-]+|[\*]))?(?:[\/]{1}([^\/]+(?:[\/][^\/]+)*|[\*])?)?$/i;
 			if(_match==='') break;
 			else if(_match==='*') return true;
 			else if(_match===requestPath) return true;
