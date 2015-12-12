@@ -111,13 +111,13 @@ var middleMatchEqual = function(_match, _value){
 	});
 };
 
-var middleMatchLike = function(match, value){
+var middleMatchLike = function(_match, _value){
 	return middleMatchCompare(_match, _value, function(m, v){
 		return m==='*' || v.indexOf(m, 0)!=-1;
 	});
 };
 
-var middleMatchLLike = function(match, value){
+var middleMatchLLike = function(_match, _value){
 	return middleMatchCompare(_match, _value, function(m, v){
 		return m==='*' || v.indexOf(m, 0)==0;
 	});

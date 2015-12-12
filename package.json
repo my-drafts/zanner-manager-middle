@@ -1,6 +1,6 @@
 {
   "name": "zanner-manager-middle",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "middle manager",
   "main": "index.js",
   "directories": {
