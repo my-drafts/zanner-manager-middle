@@ -51,7 +51,7 @@ var middle = module.exports = function(_log, _manager, _id, _execute, _match, _o
 	if(!of(_match, 'function')){
 		var __match = _match;
 		_match = function(z, request, response){
-			return middleOneMatch(__match, request);
+			return middleMatch(__match, request);
 		};
 	}
 	this.match = function(z, request, response){
@@ -98,7 +98,7 @@ var middleMatchCompare = function(_match, _value, _compare){
 		throw '[middleMatchCompare]: compare not function';
 	}
 	switch(of(_match)){
-		case 'array':  return _match.some(function(m){return middleOneMatchCompare(m, _value, _compare);});
+		case 'array':  return _match.some(function(m){return middleMatchCompare(m, _value, _compare);});
 		case 'regexp': return _match.test(_value);
 		case 'string': return !!_compare(_match, _value);
 	}
@@ -123,10 +123,14 @@ var middleMatchLLike = function(match, value){
 	});
 };
 
-var middleOneMatch = function(_match, _request){
+var middleMatch = function(_match, _request){
 	switch(of(_match)){
-		case 'array': return _match.some(function(m){ return middleOneMatch(m, _request); });
-		case 'boolean': return _match;
+		case 'array':
+			return _match.some(function(m){
+				return middleMatch(m, _request);
+			});
+		case 'boolean':
+			return _match;
 		case 'object':
 			var requestMethod = _request.method.toLowerCase();
 			if('method' in _match){
@@ -167,7 +171,7 @@ var middleOneMatch = function(_match, _request){
 				if(m[1]) matched.method = m[1].toLowerCase();
 				if(m[2]) matched.host = m[2];
 				matched.path = !m[3] ? '/' : m[3]==='*' ? '*' : '/' + m[3];
-				return middleOneMatch(matched, _request);
+				return middleMatch(matched, _request);
 			}
 			return false;
 	}
@@ -176,8 +180,12 @@ var middleOneMatch = function(_match, _request){
 
 var middleOrder = function(_order, _middleId){
 	switch(of(_order)){
-		case 'array':  return _order.some(function(o){ return middleOneOrder(o, _middleId)==1; }) ? 1 : 0;
-		case 'string': return _order.toLowerCase()==_middleId.toLowerCase() ? 1 : 0;
+		case 'array':
+			return _order.some(function(o){
+				return middleOrder(o, _middleId)==1;
+			}) ? 1 : 0;
+		case 'string':
+			return _order.toLowerCase()==_middleId.toLowerCase() ? 1 : 0;
 	}
 	throw 'Error [middleOrder]: order unknown';
 };
