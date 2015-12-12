@@ -203,7 +203,7 @@ var middleManagerOrder = function(_items){
 		else throw pf('[middleManagerOrder]: id:("%s", "%s")', a, b);
 	};
 	var itemsCompre = function(_items, i, j){
-		var a = _items[i], b = _items[j];
+		var a = _items[Math.min(i, j)], b = _items[Math.max(j, i)];
 		return compareOrders(a.order(b.id()), b.order(a.id()), a.id(), b.id());
 	};
 	var itemsSwap = function(_items, i, j){
@@ -213,8 +213,8 @@ var middleManagerOrder = function(_items){
 	};
 	for(var i=0; i<_items.length; i++)
 		for(var j=0; j<_items.length; j++)
-			if(i==j) continue;
-			else if(itemsCompre(_items, i, j)<0) itemsSwap(_items, i, j);
+			if(i===j) continue;
+			else if(itemsCompre(_items, i, j)>0) itemsSwap(_items, i, j);
 	return true;
 };
 
