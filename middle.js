@@ -41,7 +41,7 @@ var middle = module.exports = function(_log, _manager, _id, _execute, _match, _o
 	}
 	this.execute = function(z, request, response, next){
 		log('debug', 'execute("%s")', self.id());
-		var result = _execute.apply(m, [z, request, response, next]);
+		var result = _execute.apply(self, [z, request, response, next]);
 		log('info', 'execute("%s") -> %s', self.id(), uis(result, {depth: 0}));
 		return result;
 	};
@@ -56,7 +56,7 @@ var middle = module.exports = function(_log, _manager, _id, _execute, _match, _o
 	}
 	this.match = function(z, request, response){
 		log('debug', 'match("%s")', self.id());
-		var result = _match.apply(m, [z, request, response]);
+		var result = _match.apply(self, [z, request, response]);
 		log('info', 'match("%s") -> %s', self.id(), result);
 		return result;
 	};
