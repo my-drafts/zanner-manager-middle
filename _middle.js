@@ -2,18 +2,6 @@
 var pu = require('url').parse;
 var of = require('zanner-typeof').of;
 
-var matchCompare = function(_match, _value, _compare){
-	if(!of(_compare, 'function')){
-		throw '[_middle.matchCompare]: compare not function';
-	}
-	switch(of(_match)){
-		case 'array':  return _match.some(function(m){return matchCompare(m, _value, _compare);});
-		case 'regexp': return _match.test(_value);
-		case 'string': return !!_compare(_match, _value);
-	}
-	return false;
-};
-
 var path2path = function(_path){
 	return _path
 		.split('/')
@@ -48,14 +36,25 @@ var matching = {
 	path: function(_match, _value){
 		return matching.any(_match, _value) || matching.equal(_match, _value) || matching.plike(_match, _value);
 	},
+	compare: function(_match, _value, _compare){
+		if(!of(_compare, 'function')){
+			throw '[_middle.matching.compare]: compare not function';
+		}
+		switch(of(_match)){
+			case 'array':  return _match.some(function(m){return matching.compare(m, _value, _compare);});
+			case 'regexp': return _match.test(_value);
+			case 'string': return !!_compare(_match, _value);
+		}
+		return false;
+	},
 	methods: function(_match, _method){
-		return matchCompare(_match, _method, matching.method);
+		return matching.compare(_match, _method, matching.method);
 	},
 	hosts: function(_match, _host){
-		return matchCompare(_match, _host, matching.host);
+		return matching.compare(_match, _host, matching.host);
 	},
 	paths: function(_match, _path){
-		return matchCompare(_match, _path, matching.path);
+		return matching.compare(_match, _path, matching.path);
 	}
 };
 
@@ -169,42 +168,19 @@ var match = module.exports.match = function(_match, _request){
 };
 
 var order = module.exports.order = function(_order, _middleId){
-	// resolve(), reject()
-	var promise = new Promise(function(resolve, reject){
-		switch(of(_order)){
-			case 'array':
-				var eorder = _order.entries();
-				var _orderWalk = function(){
-					var _eorder = eorder.next();
-					if(_eorder.done) resolve(false);
-					else{
-						order(_eorder.value, _middleId)
-							.then(function(value){
-								if(value) resolve(true);
-								else _orderWalk();
-							})
-							.catch(reject);
-					}
-				};
-				_orderWalk();
-				break;
-			case 'string':
-				resolve(_order.toLowerCase()===_middleId.toLowerCase());
-				break;
-			default:
-				reject('[_middle.order]: order unknown');
-				break;
-		}
-	});
-	return promise;
+	switch(of(_order)){
+		case 'array':
+			return _order.some(function(o){
+				return order(o, _middleId)===1;
+			}) ? 1 : 0;
+		case 'string':
+			return (_order.toLowerCase()===_middleId.toLowerCase()) ? 1 : 0;
+	}
+	throw '[_middle.order]: order unknown';
 };
 
 var orderCheck = module.exports.orderCheck = function(_order, _ordered){
-	// resolve(), reject()
-	var promise = new Promise(function(resolve, reject){
-		_order.some(function(o){
-			return _ordered.indexOf(o)==-1;
-		}) ? reject() : resolve();
+	return !_order.some(function(o){
+		return _ordered.indexOf(o)==-1;
 	});
-	return promise;
 };
