@@ -1,5 +1,4 @@
 
-var pu = require('url').parse;
 var pf = require('util').format;
 var uis = require('util').inspect;
 var of = require('zanner-typeof').of;
